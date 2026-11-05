@@ -19,10 +19,14 @@ exports.handler = async (event) => {
 
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured in Netlify settings' }) };
   }
 
   const prompt = type === 'detect' ? buildDetectPrompt(text) : buildHumanizePrompt(text);
+
+  // Timeout set karna taaki function hang na ho
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
 
   try {
     const resp = await fetch(
@@ -33,14 +37,17 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: type === 'detect' ? 0.2 : 0.9 }
-        })
+        }),
+        signal: controller.signal // Timeout signal
       }
     );
 
+    clearTimeout(timeoutId); // Response aa gaya toh timer band karo
+
     if (!resp.ok) {
       const errText = await resp.text();
-      console.error('Gemini error:', errText);
-      return { statusCode: 500, body: JSON.stringify({ error: 'AI service unavailable. Try again.' }) };
+      console.error('Gemini API Error:', errText);
+      return { statusCode: 500, body: JSON.stringify({ error: 'AI service unavailable. Please try again.' }) };
     }
 
     const data = await resp.json();
@@ -51,7 +58,6 @@ exports.handler = async (event) => {
     }
 
     if (type === 'detect') {
-      // Parse JSON from AI response safely
       const cleaned = raw.replace(/```json|```/g, '').trim();
       let parsed;
       try {
@@ -72,6 +78,10 @@ exports.handler = async (event) => {
       };
     }
   } catch (err) {
+    clearTimeout(timeoutId); // Error aane par timer band karo
+    if (err.name === 'AbortError') {
+      return { statusCode: 504, body: JSON.stringify({ error: 'AI response timed out. Please try again.' }) };
+    }
     console.error('Function error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: 'Internal error' }) };
   }
