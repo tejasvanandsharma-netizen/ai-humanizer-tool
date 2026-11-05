@@ -28,17 +28,15 @@ exports.handler = async (event) => {
   try {
     // Sahi aur stable model name: gemini-1.5-flash-latest
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: type === 'detect' ? 0.2 : 0.9 }
-        }),
-        signal: controller.signal
-      }
-    );
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`,
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    })
+  }
+);
 
     clearTimeout(timeoutId);
 
