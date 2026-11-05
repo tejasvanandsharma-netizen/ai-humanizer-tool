@@ -52,14 +52,22 @@ document.getElementById('detect-btn').addEventListener('click', async () => {
   showLoading(resultEl, 'Analyzing text...');
 
   try {
-    const res = await fetch('/.netlify/functions/process', {
+        const res = await fetch('/.netlify/functions/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'detect', text })
     });
-    const data = await res.json();
+    
+    const responseText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Server returned:", responseText);
+      throw new Error("Server error. Please check Netlify function logs.");
+    }
+    
     if (!res.ok) throw new Error(data.error || 'Something went wrong');
-
     renderDetection(resultEl, data);
   } catch (err) {
     showError(resultEl, err.message);
@@ -113,14 +121,23 @@ document.getElementById('humanize-btn').addEventListener('click', async () => {
   showLoading(resultEl, 'Humanizing text...');
 
   try {
-    const res = await fetch('/.netlify/functions/process', {
+        const res = await fetch('/.netlify/functions/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'humanize', text })
     });
-    const data = await res.json();
+    
+    const responseText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Server returned:", responseText);
+      throw new Error("Server error. Please check Netlify function logs.");
+    }
+    
     if (!res.ok) throw new Error(data.error || 'Something went wrong');
-
+    
     resultEl.innerHTML = `
       <strong style="font-size:14px;">✨ Humanized version:</strong>
       <div class="output-box" id="humanized-output">${escapeHtml(data.result)}</div>
