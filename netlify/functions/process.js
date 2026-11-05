@@ -23,19 +23,23 @@ exports.handler = async (event) => {
   const prompt = type === 'detect' ? buildDetectPrompt(text) : buildHumanizePrompt(text);
 
   try {
-    // Google ke error message ke hisaab se exact model name aur version
+    // Request timeout set kar rahe hain taaki Netlify error na de
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000); // 9 seconds (Netlify limit se pehle)
+
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: type === 'detect' ? 0.2 : 0.9 }
-        })
+          contents: [{ parts: [{ text: prompt }] }]
+        }),
+        signal: controller.signal
       }
     );
 
+    clearTimeout(timeoutId);
     const textData = await resp.text();
 
     if (!resp.ok) {
@@ -52,43 +56,23 @@ exports.handler = async (event) => {
 
     if (type === 'detect') {
       const cleaned = raw.replace(/```json|```/g, '').trim();
-      try {
-        const parsed = JSON.parse(cleaned);
-        return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed) };
-      } catch {
-        return { statusCode: 500, body: JSON.stringify({ error: 'Could not parse AI response' }) };
-      }
+      const parsed = JSON.parse(cleaned);
+      return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed) };
     } else {
       return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result: raw }) };
     }
   } catch (err) {
-    console.error('Function Error:', err);
+    if (err.name === 'AbortError') {
+      return { statusCode: 504, body: JSON.stringify({ error: 'Text bohot lambaa hai. Timeout ho gaya. Chhota text try karein.' }) };
+    }
     return { statusCode: 500, body: JSON.stringify({ error: `Internal error: ${err.message}` }) };
   }
 };
 
 function buildDetectPrompt(text) {
-  return `You are an expert AI text detector. Analyze the following text and determine if it was written by AI or by a human.
-TEXT TO ANALYZE:
-"""
-${text}
-"""
-Respond ONLY with valid JSON:
-{
-  "ai_probability": <number 0-100>,
-  "verdict": "<likely_ai | likely_human | mixed>",
-  "reasoning": "<2-3 sentences>",
-  "signals": ["<signal 1>", "<signal 2>"]
-}`;
+  return `You are an AI text detector. Analyze text and return ONLY valid JSON: {"ai_probability": number, "verdict": "likely_ai|likely_human|mixed", "reasoning": "text", "signals": ["s1"]}. Text: """${text}"""`;
 }
 
 function buildHumanizePrompt(text) {
-  return `You are an expert human writer. Rewrite the following AI-generated text so it sounds completely natural and human-written.
-Rules:
-- Keep the meaning intact. Vary sentence length. Remove AI-signature phrases.
-- Return ONLY the rewritten text.
-TEXT TO HUMANIZE:
-"""
-${text}
-"""`;
+  return `Rewrite the following text so it sounds human. Keep meaning intact. Return ONLY the rewritten text, no extra words. Text: """${text}"""`;
 }
