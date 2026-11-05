@@ -64,7 +64,7 @@ document.getElementById('detect-btn').addEventListener('click', async () => {
       data = JSON.parse(responseText);
     } catch (e) {
       console.error("Server returned:", responseText);
-      throw new Error("Server error. Please check Netlify function logs.");
+      throw new Error("Server fail ho gaya. Shayad text lamba hai ya Netlify timeout ho gaya.");
     }
     
     if (!res.ok) throw new Error(data.error || 'Something went wrong');
