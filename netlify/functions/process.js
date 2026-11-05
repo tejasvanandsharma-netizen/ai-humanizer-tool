@@ -1,5 +1,3 @@
-// Netlify Serverless Function — Gemini API ko securely call karta hai
-
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -24,13 +22,13 @@ exports.handler = async (event) => {
 
   const prompt = type === 'detect' ? buildDetectPrompt(text) : buildHumanizePrompt(text);
 
-  // Timeout set karna taaki function hang na ho
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
 
   try {
+    // Sahi aur stable model name: gemini-1.5-flash-latest
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,16 +36,17 @@ exports.handler = async (event) => {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: type === 'detect' ? 0.2 : 0.9 }
         }),
-        signal: controller.signal // Timeout signal
+        signal: controller.signal
       }
     );
 
-    clearTimeout(timeoutId); // Response aa gaya toh timer band karo
+    clearTimeout(timeoutId);
 
     if (!resp.ok) {
       const errText = await resp.text();
-      console.error('Gemini API Error:', errText);
-      return { statusCode: 500, body: JSON.stringify({ error: 'AI service unavailable. Please try again.' }) };
+      console.error('Gemini API Error Details:', errText);
+      // Agar error aata hai, toh frontend par asli error dikhega
+      return { statusCode: 500, body: JSON.stringify({ error: `Google API Error: ${errText}` }) };
     }
 
     const data = await resp.json();
@@ -78,27 +77,21 @@ exports.handler = async (event) => {
       };
     }
   } catch (err) {
-    clearTimeout(timeoutId); // Error aane par timer band karo
+    clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
       return { statusCode: 504, body: JSON.stringify({ error: 'AI response timed out. Please try again.' }) };
     }
     console.error('Function error:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Internal error' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: `Internal error: ${err.message}` }) };
   }
 };
 
 function buildDetectPrompt(text) {
   return `You are an expert AI text detector. Analyze the following text and determine if it was written by AI (like ChatGPT, Claude, Gemini) or by a human.
-
-Signals of AI text: overly perfect grammar, uniform sentence length, generic transitions ("furthermore", "moreover"), no personal anecdotes, repetitive vocabulary, "safe" opinions, overuse of words like "delve", "realm", "navigate".
-
-Signals of human text: varied sentence length, colloquialisms, personal opinions, specific details, occasional grammar variation, humor, sarcasm.
-
 TEXT TO ANALYZE:
 """
 ${text}
 """
-
 Respond ONLY with valid JSON in this exact format — no markdown, no extra text:
 {
   "ai_probability": <number 0-100>,
@@ -110,17 +103,11 @@ Respond ONLY with valid JSON in this exact format — no markdown, no extra text
 
 function buildHumanizePrompt(text) {
   return `You are an expert human writer. Rewrite the following AI-generated text so it sounds completely natural and human-written.
-
 Rules:
 - Keep the original meaning and information intact
-- Vary sentence length (mix short and long sentences)
-- Replace formal/generic words with natural alternatives
-- Add slight imperfections humans naturally have
-- Remove AI-signature phrases like "delve", "furthermore", "in the realm of", "it's important to note"
-- Use active voice more often
-- Keep the SAME language as input (Hindi → Hindi, English → English, Hinglish → Hinglish)
-- Return ONLY the rewritten text, nothing else. No quotes, no explanations.
-
+- Vary sentence length
+- Remove AI-signature phrases
+- Return ONLY the rewritten text, nothing else.
 TEXT TO HUMANIZE:
 """
 ${text}
