@@ -23,9 +23,9 @@ exports.handler = async (event) => {
   const prompt = type === 'detect' ? buildDetectPrompt(text) : buildHumanizePrompt(text);
 
   try {
-    // Aapki list se exact model name: gemini-2.5-flash
+    // Google ke error message ke hisaab se exact model name aur version
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
