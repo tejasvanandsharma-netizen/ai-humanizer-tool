@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free AI Humanizer & AI Detector — Real-Time Tool</title>
+  <meta name="description" content="Free AI detector and humanizer. Check if text is AI-generated or human-written, and humanize AI text instantly. No signup required." />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- PASTE ADSTERRA SOCIAL BAR SCRIPT HERE (Baad mein) -->
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">🧠 AI Humanizer Pro</div>
+  </header>
+
+  <main class="container">
+
+    <div class="tabs">
+      <button class="tab active" data-tab="detector">🔍 AI Detector</button>
+      <button class="tab" data-tab="humanizer">✨ AI Humanizer</button>
+    </div>
+
+    <!-- DETECTOR TAB -->
+    <section class="panel active" id="detector">
+      <h2>Check if text is AI-generated</h2>
+      <p class="subtitle">Paste your text below — get a real-time AI probability score.</p>
+
+      <textarea id="detect-input" placeholder="Paste text here (minimum 50 words for accurate detection)..."></textarea>
+      <div class="meta">
+        <span id="detect-count">0 words</span>
+        <button class="clear-btn" data-clear="detect-input">Clear</button>
+      </div>
+
+      <button class="action-btn" id="detect-btn">Analyze Text</button>
+
+      <div class="result" id="detect-result"></div>
+    </section>
+
+    <!-- HUMANIZER TAB -->
+    <section class="panel" id="humanizer">
+      <h2>Humanize AI-generated text</h2>
+      <p class="subtitle">Convert robotic AI text into natural, human-sounding writing.</p>
+
+      <textarea id="humanize-input" placeholder="Paste AI-generated text here to humanize..."></textarea>
+      <div class="meta">
+        <span id="humanize-count">0 words</span>
+        <button class="clear-btn" data-clear="humanize-input">Clear</button>
+      </div>
+
+      <button class="action-btn" id="humanize-btn">Humanize Text</button>
+
+      <div class="result" id="humanize-result"></div>
+    </section>
+
+    <!-- AD SLOT -->
+    <div class="ad-slot">
+      <!-- PASTE ADSTERRA BANNER / NATIVE AD CODE HERE -->
+      <span>Advertisement</span>
+    </div>
+
+    <section class="faq">
+      <h2>Frequently Asked Questions</h2>
+      <details><summary>Is this tool really free?</summary><p>Yes, 100% free. No signup, no credit card, no limits.</p></details>
+      <details><summary>How accurate is the AI detector?</summary><p>Our detector uses Google's Gemini AI and analyzes writing patterns, sentence structure, and vocabulary. It's highly accurate for English text but should be used as a guide, not a definitive proof.</p></details>
+      <details><summary>Does it support Hindi?</summary><p>Yes, the tool supports Hindi, Hinglish, and 50+ other languages.</p></details>
+      <details><summary>Is my text stored?</summary><p>No. Your text is sent to the AI API for processing and is never stored on our servers.</p></details>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 AI Humanizer Pro — Free AI tools for everyone.</p>
+  </footer>
+
+  <!-- PASTE ADSTERRA POPUNDER SCRIPT HERE (Baad mein) -->
+
+  <script src="script.js"></script>
+</body>
+</html>
